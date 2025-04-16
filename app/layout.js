@@ -1,13 +1,11 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono,DM_Sans } from "next/font/google";
 import "./globals.css";
+import Provider from "./provider";
+import ConvexClientProvider from "./ConvexClientProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+
+const dmsans = DM_Sans({
   subsets: ["latin"],
 });
 
@@ -18,11 +16,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning={true}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={dmsans.className}
       >
+        <ConvexClientProvider>
         {children}
+        </ConvexClientProvider>
       </body>
     </html>
   );
