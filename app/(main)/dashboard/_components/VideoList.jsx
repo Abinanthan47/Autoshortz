@@ -23,8 +23,8 @@ function VideoList() {
             uid: user?._id
         });
         setVideoList(result);
-     const isPendingVideo = result?.find((item)=>item.status=='pending')
-     isPendingVideo&&GetPendingVideoStatus(isPendingVideo);
+        const isPendingVideo = result?.find((item)=>item.status=='pending')
+        isPendingVideo&&GetPendingVideoStatus(isPendingVideo);
     }
 
     const GetPendingVideoStatus=(pendingVideo)=>{
@@ -36,11 +36,11 @@ function VideoList() {
                 clearInterval(intervalId);
                 console.log("Video Processing Completed");
                 GetUserVideoList();
+            } else {
                 console.log("Still Pending...")
             }
         },5000)
     }
-
 
     return (
         <div>
@@ -55,9 +55,13 @@ function VideoList() {
                     </div> : <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mt-10'>
                         {videoList?.map((video, index) => (
                             <Link key={index} href={'/play-video/' + video?._id}>
-                                <div className='relative text-white'> {/* Ensure unique key */}
-                                    {video?.status == 'completed' ? (
-                                        <Image src={video?.images[0]} alt={video?.title} width={500} height={500}
+                                <div className='relative text-white'>
+                                    {video?.status == 'completed' && video?.images?.[0] ? (
+                                        <Image 
+                                            src={video.images[0]} 
+                                            alt={video?.title || 'Video thumbnail'} 
+                                            width={500} 
+                                            height={500}
                                             className='w-full object-cover rounded-xl aspect-[2/3]'
                                         />
                                     ) : (
@@ -73,7 +77,6 @@ function VideoList() {
                                 </div>
                             </Link>
                         ))}
-
                     </div>
             }
         </div>
