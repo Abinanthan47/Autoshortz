@@ -6,6 +6,7 @@ import axios from 'axios';
 import { useMutation } from 'convex/react';
 import { Loader2, WandSparklesIcon } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import Captions from './_components/Captions';
 import Preview from './_components/Preview';
 import Topic from './_components/Topic';
@@ -28,34 +29,44 @@ function CreateNewVideo() {
 
     const GenerateVideo = async () => {
         if (user?.credits <= 0) {
-            toast('Please add more credits!')
+            toast.error('Please add more credits!')
             return;
         }
 
         if (!formData?.title || !formData?.topic || !formData?.script || !formData.VideoStyle || !formData?.caption || !formData?.voice) {
-            console.log("error");
+            toast.error('Please fill in all required fields');
             return;
         }
+        
         setLoading(true);
-        const resp = await CreateIntialVideoRecord({
-            title: formData.title,
-            topic: formData.topic,
-            script: formData.script,
-            VideoStyle: formData.VideoStyle,
-            caption: formData.caption,
-            voice: formData.voice,
-            uid: user?._id,
-            createdBy: user?.email,
-            credits: user?.credits,
-        })
-        console.log(resp)
+        
+        try {
+            const resp = await CreateIntialVideoRecord({
+                title: formData.title,
+                topic: formData.topic,
+                script: formData.script,
+                VideoStyle: formData.VideoStyle,
+                caption: formData.caption,
+                voice: formData.voice,
+                uid: user?._id,
+                createdBy: user?.email,
+                credits: user?.credits,
+            })
+            console.log(resp)
 
-        const result = await axios.post('/api/generate-video-data', {
-            ...formData,
-            recordId: resp,
-        });
-        console.log(result);
-        setLoading(false);
+            const result = await axios.post('/api/generate-video-data', {
+                ...formData,
+                recordId: resp,
+            });
+            console.log(result);
+            
+            toast.success('Video generation started! Check your dashboard.');
+        } catch (error) {
+            console.error('Error generating video:', error);
+            toast.error('Failed to generate video. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (

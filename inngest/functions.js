@@ -1,26 +1,12 @@
-
 import {
   generateImagesWithNebius,
   generateScriptAndImages,
 } from "@/configs/AiModel";
 import { api } from "@/convex/_generated/api";
 import { createClient } from "@deepgram/sdk";
-import {
-  getFunctions,
-  getRenderProgress,
-  renderMediaOnLambda,
-} from "@remotion/lambda-client";
 import axios from "axios";
 import { ConvexHttpClient } from "convex/browser";
 import { inngest } from "./client";
-
-const calculateDurationInFrames = (captions) => {
-  if (!Array.isArray(captions) || captions.length === 0) return 900; // Default duration if no captions
-  const lastCaption = captions[captions.length - 1];
-  if (!lastCaption || typeof lastCaption.end !== "number") return 900;
-  const durationInSeconds = lastCaption.end + 2; // Add 2 second buffer
-  return Math.ceil(durationInSeconds * 30); // Convert to frames (30fps)
-};
 
 const BASE_URL = "https://aigurulab.tech";
 
@@ -141,155 +127,21 @@ export const GenerateVideoData = inngest.createFunction(
         }
       });
 
-      const RenderVideo = await step.run("renderVideo", async () => {
-        try {
-          const functions = await getFunctions({
-            region: "us-east-1",
-            compatibleOnly: true,
-          });
-
-          if (!functions?.length) {
-            throw new Error("No compatible Remotion Lambda functions found");
-          }
-
-          const totalFrames = calculateDurationInFrames(GenerateCaptions);
-
-          console.log("Render configuration:", {
-            totalFrames,
-            captionsLength: GenerateCaptions?.length,
-            lastCaptionEnd:
-              GenerateCaptions?.[GenerateCaptions.length - 1]?.end,
-          });
-
-          const framesPerLambda = Math.max(Math.ceil(totalFrames / 150), 20);
-
-          const { renderId, bucketName } = await renderMediaOnLambda({
-            region: "us-east-1",
-            functionName: functions[0].functionName,
-            serveUrl: process.env.AWS_SERVE_URL,
-            composition: "youtubeShort",
-            inputProps: {
-              videoData: {
-                audioUrl: GenerateAudioFile,
-                captionJson: GenerateCaptions,
-                images: GenerateImages,
-                caption: {
-                  name: caption.name,
-                  style: caption.style,
-                },
-              },
-            },
-            codec: "h264",
-            imageFormat: "jpeg",
-            maxRetries: 3,
-            framesPerLambda,
-            privacy: "public",
-            timeoutInMilliseconds: 900000,
-            concurrency: 100,
-            durationInFrames: totalFrames,
-            fps: 30,
-          });
-
-          // Monitor render progress
-          let outputUrl = null;
-          let attempts = 0;
-          const maxAttempts = 180;
-          const pollInterval = 2000;
-
-          while (attempts < maxAttempts) {
-            const progress = await getRenderProgress({
-              renderId,
-              bucketName,
-              functionName: functions[0].functionName,
-              region: "us-east-1",
-            });
-
-            console.log("Render progress:", {
-              attempt: attempts + 1,
-              done: progress.done,
-              errors: progress.errors,
-              fatalError: progress.fatalErrorEncountered,
-            });
-
-            if (progress.done) {
-              outputUrl = progress.outputFile;
-              break;
-            }
-
-            if (progress.fatalErrorEncountered) {
-              let errorMessage = "Unknown render error";
-
-              if (
-                Array.isArray(progress.errors) &&
-                progress.errors.length > 0
-              ) {
-                errorMessage = progress.errors
-                  .map((err) => {
-                    if (typeof err === "string") return err;
-                    if (err instanceof Error) return err.message;
-                    if (err && typeof err === "object") {
-                      return JSON.stringify(
-                        err,
-                        Object.getOwnPropertyNames(err)
-                      );
-                    }
-                    return String(err);
-                  })
-                  .join(", ");
-              } else if (
-                progress.errors &&
-                typeof progress.errors === "object"
-              ) {
-                errorMessage = JSON.stringify(
-                  progress.errors,
-                  Object.getOwnPropertyNames(progress.errors)
-                );
-              }
-
-              console.error("Render fatal error details:", {
-                errorMessage,
-                renderId,
-                bucketName,
-                functionName: functions[0].functionName,
-              });
-
-              throw new Error(`Render failed: ${errorMessage}`);
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
-            attempts++;
-          }
-
-          if (!outputUrl) {
-            throw new Error(
-              "Render timed out after " +
-                (maxAttempts * pollInterval) / 1000 +
-                " seconds"
-            );
-          }
-
-          await convex.mutation(api.videoData.UpdateVideoRecord, {
-            recordId: event.data.recordId,
-            audioUrl: GenerateAudioFile,
-            captionJson: GenerateCaptions,
-            images: GenerateImages,
-            downloadUrl: outputUrl,
-          });
-
-          return outputUrl;
-        } catch (error) {
-          console.error("Render error:", {
-            message: error.message,
-            stack: error.stack,
-            captionsLength: GenerateCaptions?.length,
-            lastCaptionEnd:
-              GenerateCaptions?.[GenerateCaptions.length - 1]?.end,
-          });
-          throw new Error(`Render failed: ${error.message}`);
-        }
+      // Update the video record with generated data (no video rendering here)
+      await convex.mutation(api.videoData.UpdateVideoRecord, {
+        recordId: event.data.recordId,
+        audioUrl: GenerateAudioFile,
+        captionJson: GenerateCaptions,
+        images: GenerateImages,
+        downloadUrl: null, // No download URL since we're using browser rendering
       });
 
-      return { downloadUrl: RenderVideo };
+      return { 
+        audioUrl: GenerateAudioFile,
+        captionJson: GenerateCaptions,
+        images: GenerateImages,
+        message: "Video data generated successfully. Use browser renderer to create video."
+      };
     } catch (error) {
       console.error("Error in GenerateVideoData function:", error);
       throw new Error(error.message || "An unknown error occurred");
