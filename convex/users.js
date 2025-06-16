@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { query } from "./_generated/server";
 
-
 export const CreateNewUser = mutation({
     args:{
         name:v.string(),
@@ -10,23 +9,14 @@ export const CreateNewUser = mutation({
         pictureURL:v.string(),
     },
     handler:async(ctx,args)=>{
-
-        const user = await ctx.db.query('users')
-        .filter((q)=>q.eq(q.field('email'),args.email))
-        .collect();
-
-        if(!user[0]?.email){
-
-            const userData = {
-                name:args?.name,
-                email:args?.email,
-                pictureURL:args?.pictureURL,
-                credits:3
-            }
-
-            const result = await ctx.db.insert('users',userData)
-            return userData
+        // For demo purposes, just return mock user data
+        const userData = {
+            _id: "mock-user-id",
+            name: args?.name || "Demo User",
+            email: args?.email || "demo@example.com",
+            pictureURL: args?.pictureURL || "",
+            credits: 10
         }
-        return user[0];
+        return userData;
     }
 })

@@ -4,19 +4,11 @@ import { useEffect } from "react";
 import { useAuthContext } from "../provider";
 import AppHeader from "./_components/AppHeader";
 import AppSidebar from "./_components/AppSidebar";
-import { useRouter } from "next/navigation";
 
 function DashboardProvider({ children }) {
   const { user } = useAuthContext();
-  const router = useRouter();
 
-  useEffect(() => {
-    if (!user) {
-      router.replace("/");
-    }
-  }, [user, router]); 
-
-  if (!user) return null; 
+  // Since we're removing auth, user will always be available
   return (
     <SidebarProvider>
       <AppSidebar />

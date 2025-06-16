@@ -1,7 +1,6 @@
 "use client"
 import { useAuthContext } from '@/app/provider';
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import Image from 'next/image'
 import React from 'react'
 
 function AppHeader() {
@@ -9,9 +8,9 @@ function AppHeader() {
   return (
     <div className='p-3 flex justify-between items-center'>
         <SidebarTrigger/>
-     {
-        user?.pictureURL &&    <Image src={user?.pictureURL} alt='user' width={40} height={40} className='rounded-full'/>
-     }
+        <div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center'>
+            <span className='text-sm font-medium'>DU</span>
+        </div>
     </div>
   )
 }

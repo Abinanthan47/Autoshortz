@@ -3,7 +3,6 @@ import { Button } from '../../components/ui/button'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useAuthContext } from '../provider'
-import Authentication from './Authentication'
 
 function Header() {
   const { user } = useAuthContext();
@@ -17,22 +16,14 @@ function Header() {
         <h2 className='text-2xl font-medium'>VideoGen</h2>
       </div>
       <div>
-        {
-          !user ?
-            <Authentication>
-              <Button>Get Started</Button>
-            </Authentication>
-            : <div className='flex items-center gap-3'>
-              <Link href={'/dashboard'}>
-                <Button>Dashboard</Button>
-              </Link>
-              {
-                user?.pictureURL &&  
-                  <Image src={user?.pictureURL} alt='userImage' width={40} height={40} className='rounded-full' /> 
-              }
-
-            </div>
-        }
+        <div className='flex items-center gap-3'>
+          <Link href={'/dashboard'}>
+            <Button>Dashboard</Button>
+          </Link>
+          <div className='w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center'>
+            <span className='text-sm font-medium'>DU</span>
+          </div>
+        </div>
       </div>
     </div>
   )
