@@ -53,7 +53,7 @@ export async function POST(req) {
 
     const result = await generateScriptAndImages(topic, prompt);
 
-    if (!result || !result.scripts || !Array.isArray(result.scripts)) {
+    if (!result || typeof result !== 'object' || !result.scripts || !Array.isArray(result.scripts)) {
       return NextResponse.json(
         { error: "Invalid response format from API" },
         { status: 500 }
